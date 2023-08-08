@@ -2,9 +2,20 @@ const { authenticateJwt, SECRET } = require("../middleware/auth");
 const express = require('express');
 const { Course, Admin } = require("../db");
 const jwt = require('jsonwebtoken');
-
+const mongoose = require('mongoose');
 
 const router = express.Router();
+
+router.get("/me", authenticateJwt, async (req, res) => {
+  const admin = await Admin.findOne({ username: req.user.username });
+  if (!admin) {
+    res.status(403).json({msg: "Admin doesnt exist"})
+    return
+  }
+  res.json({
+      username: admin.username
+  })
+});
 
 router.post('/signup', (req, res) => {
     const { username, password } = req.body;
@@ -15,10 +26,10 @@ router.post('/signup', (req, res) => {
         const obj = { username: username, password: password };
         const newAdmin = new Admin(obj);
         newAdmin.save();
+        
         const token = jwt.sign({ username, role: 'admin' }, SECRET, { expiresIn: '1h' });
         res.json({ message: 'Admin created successfully', token });
       }
-  
     }
     Admin.findOne({ username }).then(callback);
   });
@@ -40,12 +51,6 @@ router.post('/signup', (req, res) => {
     res.json({ message: 'Course created successfully', courseId: course.id });
   });
   
-  router.get('/me', authenticateJwt, async (req, res)=>{
-      
-      res.json({
-          username: req.user.username
-      })
-  });
   
   router.put('/courses/:courseId', authenticateJwt, async (req, res) => {
     const course = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
@@ -60,6 +65,10 @@ router.post('/signup', (req, res) => {
     const courses = await Course.find({});
     res.json({ courses });
   });
-  
+  router.get('/course/:courseId', authenticateJwt, async (req, res) => {
+    const courseId = req.params.courseId;
+    const course = await Course.findById(courseId);
+    res.status(200).json({ course });
+  });
 
   module.exports = router

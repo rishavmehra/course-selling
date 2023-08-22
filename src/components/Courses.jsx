@@ -9,9 +9,9 @@ function Courses() {
     const [ courses, setCourses ] = useState([]);
 
     useEffect(()=>{
-        fetch("http://localhost:3001/admin/courses/", {
+        fetch("http://localhost:3000/admin/courses/", {
             method: "GET",
-            headers: {
+            headers: {  
                 "Authorization": "Bearer " + localStorage.getItem("token")
             }
         }).then(res=>{
